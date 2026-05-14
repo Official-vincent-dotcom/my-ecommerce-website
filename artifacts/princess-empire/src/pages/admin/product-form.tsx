@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, Plus, X, Upload } from "lucide-react";
+import { ArrowLeft, Plus, X, Upload, ImagePlus, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import {
   useGetProduct, useCreateProduct, useUpdateProduct,
@@ -46,9 +46,10 @@ function ProductForm({ isEdit }: { isEdit?: boolean }) {
     sizes: [] as string[],
     colors: [] as string[],
   });
-  const [newImage, setNewImage] = useState("");
   const [newSize, setNewSize] = useState("");
   const [newColor, setNewColor] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (product && isEdit) {
@@ -74,11 +75,30 @@ function ProductForm({ isEdit }: { isEdit?: boolean }) {
 
   const set = (key: string, val: unknown) => setForm((prev) => ({ ...prev, [key]: val }));
 
-  const addImage = () => {
-    if (newImage.trim()) {
-      set("images", [...form.images, newImage.trim()]);
-      setNewImage("");
+  const handleImageFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      const body = new FormData();
+      body.append("image", file);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body });
+        if (res.ok) {
+          const data = (await res.json()) as { url: string };
+          uploaded.push(data.url);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } catch {
+        toast.error(`Error uploading ${file.name}`);
+      }
     }
+    if (uploaded.length > 0) {
+      set("images", [...form.images, ...uploaded]);
+    }
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const addSize = () => {
@@ -213,29 +233,59 @@ function ProductForm({ isEdit }: { isEdit?: boolean }) {
           </div>
 
           {/* Images */}
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h3 className="font-semibold text-foreground">Product Images</h3>
-            <div className="flex gap-2">
-              <Input value={newImage} onChange={(e) => setNewImage(e.target.value)} placeholder="Image URL (https://...)" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addImage())} />
-              <Button type="button" onClick={addImage} variant="outline" size="sm" className="rounded-xl gap-1 shrink-0"><Plus className="w-4 h-4" />Add</Button>
+
+            {/* Drop zone */}
+            <div
+              className="relative border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-primary"); }}
+              onDragLeave={(e) => e.currentTarget.classList.remove("border-primary")}
+              onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-primary"); handleImageFiles(e.dataTransfer.files); }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleImageFiles(e.target.files)}
+              />
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm">Uploading images...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <ImagePlus className="w-8 h-8 text-muted-foreground/50" />
+                  <p className="text-sm font-medium">Tap to choose images</p>
+                  <p className="text-xs">or drag & drop here. Supports JPG, PNG, WEBP — max 10MB each</p>
+                </div>
+              )}
             </div>
+
+            {/* Preview grid */}
             {form.images.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
+              <div className="flex flex-wrap gap-3">
                 {form.images.map((img, i) => (
                   <div key={i} className="relative group">
-                    <img src={img} alt="" className="w-20 h-20 object-cover rounded-xl border border-border bg-muted" />
+                    <img src={img} alt="" className="w-24 h-24 object-cover rounded-xl border border-border bg-muted" />
                     <button
                       type="button"
                       onClick={() => set("images", form.images.filter((_, j) => j !== i))}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center shadow-md"
                     >
                       <X className="w-3 h-3" />
                     </button>
+                    {i === 0 && (
+                      <span className="absolute bottom-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-md font-medium">Main</span>
+                    )}
                   </div>
                 ))}
               </div>
             )}
-            <p className="text-xs text-muted-foreground">Tip: Use picsum.photos URLs or real image URLs</p>
           </div>
 
           {/* Sizes & Colors */}

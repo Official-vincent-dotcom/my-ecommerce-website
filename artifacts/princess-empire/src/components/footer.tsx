@@ -1,7 +1,11 @@
 import { Link } from "wouter";
 import { Crown, Mail, Phone, MapPin, Instagram, Facebook, Twitter } from "lucide-react";
+import { useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 
 export function Footer() {
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const storeName = settings?.storeName ?? "Princess Empire";
+
   return (
     <footer className="bg-foreground text-background mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -12,7 +16,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                 <Crown className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-bold">Princess Empire</span>
+              <span className="font-serif text-xl font-bold">{storeName}</span>
             </div>
             <p className="text-background/60 text-sm leading-relaxed mb-4">
               Your destination for premium fashion, beauty, and lifestyle products. Elegance for everyone, delivered to your door across Nigeria and Africa.
@@ -98,7 +102,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-background/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-background/40 text-xs">© {new Date().getFullYear()} Princess Empire. All rights reserved.</p>
+          <p className="text-background/40 text-xs">© {new Date().getFullYear()} {storeName}. All rights reserved.</p>
           <div className="flex gap-4">
             <a href="#" className="text-xs text-background/40 hover:text-background/70 transition-colors">Privacy Policy</a>
             <a href="#" className="text-xs text-background/40 hover:text-background/70 transition-colors">Terms of Service</a>

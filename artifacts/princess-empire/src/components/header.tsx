@@ -4,7 +4,7 @@ import { Crown, ShoppingBag, Heart, User, Search, Menu, X, Sun, Moon, ChevronDow
 import { useCart } from "./cart-context";
 import { useWishlist } from "./wishlist-context";
 import { useTheme } from "./theme-provider";
-import { useGetSearchSuggestions } from "@workspace/api-client-react";
+import { useGetSearchSuggestions, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,6 +20,8 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const searchRef = useRef<HTMLDivElement>(null);
   const [, navigate] = useLocation();
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const storeName = settings?.storeName ?? "Princess Empire";
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(searchQuery), 300);
@@ -74,7 +76,7 @@ export function Header() {
               <Crown className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
-              <span className="font-serif text-xl font-bold text-foreground tracking-wide">Princess Empire</span>
+              <span className="font-serif text-xl font-bold text-foreground tracking-wide">{storeName}</span>
               <p className="text-xs text-muted-foreground leading-none">Elegance for Everyone</p>
             </div>
           </Link>

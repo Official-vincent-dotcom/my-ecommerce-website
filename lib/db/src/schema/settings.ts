@@ -11,6 +11,8 @@ export const settingsTable = pgTable("settings", {
   currency: text("currency"),
   heroTitle: text("hero_title"),
   heroSubtitle: text("hero_subtitle"),
+  adminEmail: text("admin_email"),
+  adminPassword: text("admin_password"),
 });
 
 export const insertSettingsSchema = createInsertSchema(settingsTable).omit({ id: true });

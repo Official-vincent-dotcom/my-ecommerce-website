@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Phone } from "lucide-react";
+import { Settings, Save, Phone, ShieldCheck } from "lucide-react";
 import { useGetSettings, useUpdateSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AdminLayout, requireAdmin } from "./layout";
@@ -22,6 +22,12 @@ function AdminSettings() {
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
 
+  const [credCurrentPw, setCredCurrentPw] = useState("");
+  const [credNewEmail, setCredNewEmail] = useState("");
+  const [credNewPw, setCredNewPw] = useState("");
+  const [credConfirmPw, setCredConfirmPw] = useState("");
+  const [credSaving, setCredSaving] = useState(false);
+
   useEffect(() => {
     if (settings) {
       setStoreName(settings.storeName ?? "Princess Empire");
@@ -33,6 +39,46 @@ function AdminSettings() {
       setHeroSubtitle(settings.heroSubtitle ?? "");
     }
   }, [settings]);
+
+  const handleCredentialsSave = async () => {
+    if (!credCurrentPw) {
+      toast.error("Enter your current password to make changes");
+      return;
+    }
+    if (!credNewEmail && !credNewPw) {
+      toast.error("Provide a new email or new password");
+      return;
+    }
+    if (credNewPw && credNewPw !== credConfirmPw) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    setCredSaving(true);
+    try {
+      const res = await fetch("/api/auth/credentials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: credCurrentPw,
+          newEmail: credNewEmail || undefined,
+          newPassword: credNewPw || undefined,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Admin credentials updated successfully");
+        setCredCurrentPw("");
+        setCredNewEmail("");
+        setCredNewPw("");
+        setCredConfirmPw("");
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast.error(data.error ?? "Failed to update credentials");
+      }
+    } catch {
+      toast.error("Network error. Please try again.");
+    }
+    setCredSaving(false);
+  };
 
   const handleSave = () => {
     updateSettings.mutate({
@@ -148,6 +194,70 @@ function AdminSettings() {
             <Label>Hero Subtitle</Label>
             <Input value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)} placeholder="e.g. Arrivals" className="mt-1" />
           </div>
+        </div>
+
+        {/* Admin Credentials */}
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" /> Admin Access
+          </h3>
+          <p className="text-sm text-muted-foreground">Change the email and password used to log into the admin panel. You must enter your current password to save changes.</p>
+
+          <div>
+            <Label>Current Password *</Label>
+            <Input
+              type="password"
+              value={credCurrentPw}
+              onChange={(e) => setCredCurrentPw(e.target.value)}
+              placeholder="Your current password"
+              className="mt-1"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div>
+              <Label>New Admin Email</Label>
+              <Input
+                type="email"
+                value={credNewEmail}
+                onChange={(e) => setCredNewEmail(e.target.value)}
+                placeholder="admin@yourbusiness.com"
+                className="mt-1"
+              />
+            </div>
+            <div />
+            <div>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                value={credNewPw}
+                onChange={(e) => setCredNewPw(e.target.value)}
+                placeholder="New password"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Confirm New Password</Label>
+              <Input
+                type="password"
+                value={credConfirmPw}
+                onChange={(e) => setCredConfirmPw(e.target.value)}
+                placeholder="Confirm new password"
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleCredentialsSave}
+            disabled={credSaving}
+            variant="outline"
+            className="gap-2 rounded-xl"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            {credSaving ? "Updating..." : "Update Credentials"}
+          </Button>
         </div>
 
         <Button onClick={handleSave} disabled={updateSettings.isPending} className="gap-2 rounded-xl w-full sm:w-auto px-8 py-5" data-testid="button-save-settings-bottom">
