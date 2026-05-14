@@ -8,10 +8,9 @@ services:
     name: princess-empire
     runtime: node
     plan: free
-    buildCommand: >
-      npm install -g pnpm@10 &&
+    buildCommand: >-
+      npm install -g pnpm@10.8.1 &&
       pnpm install --frozen-lockfile &&
-      pnpm run typecheck:libs &&
       BASE_PATH=/ pnpm --filter @workspace/princess-empire run build &&
       pnpm --filter @workspace/api-server run build
     startCommand: node artifacts/api-server/dist/index.mjs
