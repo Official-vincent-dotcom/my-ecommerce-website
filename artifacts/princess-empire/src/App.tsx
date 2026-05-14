@@ -23,6 +23,7 @@ import { AdminNewProduct, AdminEditProduct } from "@/pages/admin/product-form";
 import AdminOrders from "@/pages/admin/orders";
 import AdminCategories from "@/pages/admin/categories";
 import AdminSettings from "@/pages/admin/settings";
+import LandingPage from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -48,6 +49,9 @@ function StoreLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* Landing page */}
+      <Route path="/landing" component={LandingPage} />
+
       {/* Public store */}
       <Route path="/" component={() => <StoreLayout><HomePage /></StoreLayout>} />
       <Route path="/shop" component={() => <StoreLayout><ShopPage /></StoreLayout>} />

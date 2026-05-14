@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 
 export default function AdminLoginPage() {
   const [, navigate] = useLocation();
-  const [email, setEmail] = useState("admin@princessempire.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
           navigate("/admin/dashboard");
         },
         onError: () => {
-          setError("Invalid email or password. Try admin@princessempire.com / admin123");
+          setError("Invalid email or password. Please try again.");
         },
       }
     );
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
           </form>
 
           <p className="text-background/30 text-xs text-center mt-6">
-            Demo: admin@princessempire.com / admin123
+            Authorized personnel only
           </p>
         </div>
       </div>
