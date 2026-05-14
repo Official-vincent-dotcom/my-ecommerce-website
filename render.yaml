@@ -1,0 +1,31 @@
+databases:
+  - name: princess-empire-db
+    databaseName: princess_empire
+    plan: free
+
+services:
+  - type: web
+    name: princess-empire
+    runtime: node
+    plan: free
+    buildCommand: >
+      npm install -g pnpm@10 &&
+      pnpm install --frozen-lockfile &&
+      pnpm run typecheck:libs &&
+      BASE_PATH=/ pnpm --filter @workspace/princess-empire run build &&
+      pnpm --filter @workspace/api-server run build
+    startCommand: node artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BASE_PATH
+        value: /
+      - key: DATABASE_URL
+        fromDatabase:
+          name: princess-empire-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
